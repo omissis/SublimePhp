@@ -1,0 +1,6 @@
+[
+    {
+        "caption": "Sublime PHP: Import namespace",
+        "command": "sublime_php_import_namespace"
+    }
+]

@@ -1,0 +1,3 @@
+[
+    { "keys": ["alt+enter"], "command": "sublime_php_import_namespace" }
+]
