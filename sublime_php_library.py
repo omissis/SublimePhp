@@ -1,4 +1,4 @@
-import sublime, sublime_plugin
+import sublime
 import os
 import re
 
