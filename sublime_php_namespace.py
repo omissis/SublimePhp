@@ -19,4 +19,11 @@ class SublimePhpImportNamespaceCommand(sublime_plugin.TextCommand):
             word_sel = self.view.word(sel)
             namespace = self.view.substr(word_sel)
 
-            namespace_insert(self.view, edit, namespace)
+            if '' == namespace:
+                continue
+
+            region_repository = ViewRegionRepository(self.view)
+            region = region_repository.find_by_namespace(namespace)
+
+            command = InsertNamespaceCommand(self.view, edit, region, namespace)
+            command.execute()
