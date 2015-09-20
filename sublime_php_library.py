@@ -3,6 +3,7 @@ import glob
 import json
 import os
 import re
+import hashlib
 
 from pprint import pprint
 from inspect import getmembers
@@ -12,6 +13,12 @@ from inspect import getmembers
 def is_php_file(view):
     return view.file_name().endswith('.php')
 
+def get_index_path(base_path):
+    m = hashlib.md5()
+
+    m.update(','.join(sublime.active_window().folders()).encode('utf-8'))
+
+    return base_path + os.sep + m.hexdigest() + '.namespaces.index.json'
 
 # namespace SourceCode
 
