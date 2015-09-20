@@ -10,3 +10,5 @@ TODO
 ----
 
 * replace `is_php_file()` with configuration parameters
+* create a cache file for each project
+* add configuration for selecting what file extensions to consider for indexing
