@@ -36,27 +36,49 @@ class FilesystemFqdnRepository:
     _class_regex = 'class\s+([A-z][A-z0-9\\\\]*)?'
     _namespace_separator = '\\'
     _current_namespace = ''
+    _is_comment_line = False
+    _last_errors = []
 
     # finds all fqdns within the given list of files' contents
     def find_by_filenames(self, filenames):
         fqdns = set()
         fqdn = None
 
+        self._last_errors = []
+
         for filename in filenames:
-            with open(filename, 'r') as php_file:
-                for line in php_file:
-                    if 'namespace' in line:
-                        self._current_namespace = self._extract_namespace(line)
-                    if 'class' in line:
-                        current_class = self._extract_class(line)
-                        fqdn = self._format_fqdn(current_class)
-                    if 'interface' in line:
-                        current_interface = self._extract_interface(line)
-                        fqdn = self._format_fqdn(current_interface)
-                    if (bool(fqdn)):
-                        fqdns.add(fqdn)
+            try:
+                with open(filename, 'r') as php_file:
+                    for line in php_file:
+                        if '/*' in line:
+                            self._is_comment_line = True
+                        if '*/' in line:
+                            self._is_comment_line = False
+                        if '//' in line:
+                            continue
+                        if self._is_comment_line:
+                            continue
+                        if '$namespace' in line or '$class' in line or '$interface' in line:
+                            continue
+                        if 'namespace ' in line or 'namespace\t' in line:
+                            self._current_namespace = self._extract_namespace(line)
+                        if 'class ' in line or 'class\t' in line:
+                            current_class = self._extract_class(line)
+                            fqdn = self._format_fqdn(current_class)
+                        if 'interface ' in line or 'interface\t' in line:
+                            current_interface = self._extract_interface(line)
+                            fqdn = self._format_fqdn(current_interface)
+                        if (bool(fqdn)):
+                            fqdns.add(fqdn)
+            except UnicodeDecodeError as ude:
+                self._last_errors.append("Cannot parse namespace.\n File:" + filename + "\n\n")
+            except TypeError as te:
+                self._last_errors.append("Cannot parse namespace.\n File: " + filename + "\nLine: \n\n" + line + "\n\n")
 
         return fqdns
+
+    def get_last_errors(self):
+        return self._last_errors
 
     def _format_fqdn(self, construct_name):
         return self._current_namespace + self._namespace_separator + construct_name
@@ -65,7 +87,8 @@ class FilesystemFqdnRepository:
         ns = re.search(self._namespace_regex, line)
 
         if (not bool(ns)):
-            raise Exception('Cannot find namespace in this line. This is probably a bug, please send a report.')
+            message = "Cannot find namespace in this line. This is probably a bug, please send a report. Line: \n\n" + line + "\n\n"
+            raise Exception(message)
 
         if (None == ns.group(1)):
             return ''
@@ -76,7 +99,8 @@ class FilesystemFqdnRepository:
         ns = re.search(self._class_regex, line)
 
         if (not bool(ns)):
-            raise Exception('Cannot find class in this line. This is probably a bug, please send a report.')
+            message = "Cannot find class in this line. This is probably a bug, please send a report. Line: \n\n" + line + "\n\n"
+            raise Exception(message)
 
         return ns.group(1)
 
@@ -84,7 +108,8 @@ class FilesystemFqdnRepository:
         ns = re.search(self._interface_regex, line)
 
         if (not bool(ns)):
-            raise Exception('Cannot find class in this line. This is probably a bug, please send a report.')
+            message = "Cannot find interface in this line. This is probably a bug, please send a report. Line: \n\n" + line + "\n\n"
+            raise Exception(message)
 
         return ns.group(1)
 
@@ -123,7 +148,7 @@ class FqdnIndex(object):
 
     def get(self, symbol):
         if symbol in self._index:
-            return self._index[symbol].popitem()[0]
+            return list(self._index[symbol].keys())
 
         return None
 
@@ -156,10 +181,12 @@ class IndexManager:
 class FilesRepository:
     def __init__(self, folders):
         self._folders = folders
-        self._folders_to_exclude = ['.', '..', '.git']
-        self._files_to_include = ['.php']
+        self._file_extensions_to_exclude = []
+        self._file_extensions_to_include = []
 
-    def find_by_extensions(self, extensions):
+    def find_by_extensions(self, file_extensions_to_include, file_extensions_to_exclude = ['.', '..', '.git']):
+        self._file_extensions_to_include = file_extensions_to_include
+        self._file_extensions_to_exclude = file_extensions_to_exclude
         results = []
 
         for folder in self._folders:
@@ -175,14 +202,14 @@ class FilesRepository:
         return results
 
     def _should_skip_folder(self, foldername):
-        for _folder in self._folders_to_exclude:
+        for _folder in self._file_extensions_to_exclude:
             if foldername.startswith(_folder):
                 return True
 
         return False
 
     def _should_skip_file(self, filename):
-        for _file in self._files_to_include:
+        for _file in self._file_extensions_to_include:
             if filename.endswith(_file):
                 return False
 

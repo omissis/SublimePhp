@@ -2,5 +2,9 @@
     {
         "caption": "Sublime PHP: Import namespace",
         "command": "sublime_php_import_namespace"
+    },
+    {
+        "caption": "Sublime PHP: Build namespaces index",
+        "command": "sublime_php_index_fqdns"
     }
 ]

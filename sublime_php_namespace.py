@@ -6,29 +6,30 @@ from .sublime_php_library import *
 from pprint import pprint
 from inspect import getmembers
 
+class SublimePhpConfig:
+    cache_path = os.path.join(sublime.cache_path(), 'SublimePhp')
+    file_extensions_to_include = ['.php']
+    file_extensions_to_exclude = ['.', '..', '.git']
+
 class SublimePhpImportNamespaceCommand(sublime_plugin.TextCommand):
-    _cache_path = os.path.join(sublime.cache_path(), 'SublimePhp')
+    _fqdns = []
 
     def run(self, edit):
-        if not os.path.exists(self._cache_path):
-            os.makedirs(self._cache_path)
+        if not os.path.exists(SublimePhpConfig.cache_path):
+            os.makedirs(SublimePhpConfig.cache_path)
 
         if not is_php_file(self.view):
             return
 
-        index_manager = IndexManager(self._cache_path + os.sep + 'namespaces.index.json')
+        window = sublime.active_window()
+
+        index_manager = IndexManager(SublimePhpConfig.cache_path + os.sep + 'namespaces.index.json')
 
         index = index_manager.load()
 
         if None == index:
-            file_repository = FilesRepository(sublime.active_window().folders())
-            fs_fqdn_repository = FilesystemFqdnRepository()
-            filenames = file_repository.find_by_extensions('php')
-            fqdns = fs_fqdn_repository.find_by_filenames(filenames)
-            index = FqdnIndex.create_from_set(fqdns)
-            index_manager.dump(index)
-
-        view_fqdn_repository = ViewFqdnRepository(self.view)
+            self.view.run_command("sublime_php_index_fqdns")
+            index = index_manager.load()
 
         for sel in self.view.sel():
             word_sel = self.view.word(sel)
@@ -37,18 +38,51 @@ class SublimePhpImportNamespaceCommand(sublime_plugin.TextCommand):
             if '' == symbol:
                 continue
 
-            fqdn = index.get(symbol)
+            self._fqdns = index.get(symbol)
 
-            if None == fqdn:
+            if None == self._fqdns:
                 continue
 
-            region_repository = ViewRegionRepository(self.view)
-            region = region_repository.find_region_for_namespace(fqdn)
-
-            view_fqdns = view_fqdn_repository.find_by_namespace(fqdn)
-
-            if len(view_fqdns) > 0:
+            if (1 == len(self._fqdns)):
+                self.view.run_command("sublime_php_insert_namespace", {"fqdn": self._fqdns.pop()})
                 continue
 
-            command = InsertNamespaceCommand(self.view, edit, region, fqdn)
-            command.execute()
+            window.show_quick_panel(self._fqdns, self._on_fqdn_chosen)
+
+    def _on_fqdn_chosen(self, chosen_fqdn_key):
+        fqdn = self._fqdns[chosen_fqdn_key]
+
+        self.view.run_command("sublime_php_insert_namespace", {"fqdn": fqdn})
+
+class SublimePhpInsertNamespaceCommand(sublime_plugin.TextCommand):
+    def run(self, edit, **args):
+        fqdn = args.get('fqdn')
+
+        if None == fqdn:
+            return
+
+        view_fqdn_repository = ViewFqdnRepository(self.view)
+        region_repository = ViewRegionRepository(self.view)
+        region = region_repository.find_region_for_namespace(fqdn)
+
+        view_fqdns = view_fqdn_repository.find_by_namespace(fqdn)
+
+        if len(view_fqdns) > 0:
+            return
+
+        command = InsertNamespaceCommand(self.view, edit, region, fqdn)
+        command.execute()
+
+class SublimePhpIndexFqdnsCommand(sublime_plugin.TextCommand):
+    def run(self, edit):
+        index_manager = IndexManager(SublimePhpConfig.cache_path + os.sep + 'namespaces.index.json')
+        window = sublime.active_window()
+        file_repository = FilesRepository(window.folders())
+        fs_fqdn_repository = FilesystemFqdnRepository()
+        filenames = file_repository.find_by_extensions(SublimePhpConfig.file_extensions_to_include)
+        fqdns = fs_fqdn_repository.find_by_filenames(filenames)
+        index = FqdnIndex.create_from_set(fqdns)
+
+        index_manager.dump(index)
+
+        return index
