@@ -13,13 +13,6 @@ from inspect import getmembers
 def is_php_file(view):
     return view.file_name().endswith('.php')
 
-def get_index_path(base_path):
-    m = hashlib.md5()
-
-    m.update(','.join(sublime.active_window().folders()).encode('utf-8'))
-
-    return base_path + os.sep + m.hexdigest() + '.namespaces.index.json'
-
 # namespace SourceCode
 
 # manages the queries for fqdns inside sublime.View objects
@@ -129,6 +122,15 @@ class FqdnIndex(object):
 
     def __init__(self, fqdns):
         self._index = fqdns
+
+    @staticmethod
+    def get_path_for_current_project(base_path):
+        m = hashlib.md5()
+
+        m.update(','.join(sublime.active_window().folders()).encode('utf-8'))
+
+        return base_path + os.sep + m.hexdigest() + '.namespaces.index.json'
+
 
     @classmethod
     def create_from_dict(klass, fqdns):

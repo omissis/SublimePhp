@@ -9,24 +9,28 @@ from inspect import getmembers
 class SublimePhpConfig():
     file_extensions_to_include = ['.php']
     file_extensions_to_exclude = ['.', '..', '.git']
-    cache_path = os.path.join(sublime.cache_path(), 'SublimePhp')
 
 class SublimePhpImportNamespaceCommand(sublime_plugin.TextCommand):
     _fqdns = []
+    _index = {}
+    _cache_path = None
+    _index_manager = None
 
     def run(self, edit):
-        if not os.path.exists(SublimePhpConfig.cache_path):
-            os.makedirs(SublimePhpConfig.cache_path)
-
         if not is_php_file(self.view):
             return
 
-        index_manager = IndexManager(get_index_path(SublimePhpConfig.cache_path))
-        index = index_manager.load()
+        self._cache_path = os.path.join(sublime.cache_path(), 'SublimePhp')
 
-        if None == index:
+        if not os.path.exists(self._cache_path):
+            os.makedirs(self._cache_path)
+
+        self._index_manager = IndexManager(FqdnIndex.get_path_for_current_project(self._cache_path))
+        self._index = self._index_manager.load()
+
+        if None == self._index:
             self.view.run_command("sublime_php_index_fqdns")
-            index = index_manager.load()
+            self._index = self._index_manager.load()
 
         for sel in self.view.sel():
             word_sel = self.view.word(sel)
@@ -35,7 +39,7 @@ class SublimePhpImportNamespaceCommand(sublime_plugin.TextCommand):
             if '' == symbol:
                 continue
 
-            self._fqdns = index.get(symbol)
+            self._fqdns = self._index.get(symbol)
 
             if None == self._fqdns:
                 continue
@@ -75,13 +79,12 @@ class SublimePhpInsertNamespaceCommand(sublime_plugin.TextCommand):
 
 class SublimePhpIndexFqdnsCommand(sublime_plugin.TextCommand):
     def run(self, edit):
+        cache_path = os.path.join(sublime.cache_path(), 'SublimePhp')
         file_repository = FilesRepository(sublime.active_window().folders())
         fs_fqdn_repository = FilesystemFqdnRepository()
         filenames = file_repository.find_by_extensions(SublimePhpConfig.file_extensions_to_include)
         fqdns = fs_fqdn_repository.find_by_filenames(filenames)
         index = FqdnIndex.create_from_set(fqdns)
 
-        index_manager = IndexManager(get_index_path(SublimePhpConfig.cache_path))
+        index_manager = IndexManager(FqdnIndex.get_path_for_current_project(cache_path))
         index_manager.dump(index)
-
-        return index
