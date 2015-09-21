@@ -1,0 +1,14 @@
+[
+    {
+        "id": "tools",
+        "children": [
+            {
+                "id": "sublimephp",
+                "caption": "SublimePHP",
+                "children": [
+                    {"command": "sublime_php_index_fqdns", "caption": "(Re)Build Namespaces index."}
+                ]
+            }
+        ]
+    },
+]

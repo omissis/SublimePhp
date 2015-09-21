@@ -1,0 +1,10 @@
+[
+    {
+        "id": "sublimephp",
+        "caption": "SublimePHP",
+        "children":
+        [
+            {"command": "sublime_php_import_namespace", "caption": "Insert Namespace under cursor."}
+        ]
+    }
+]
