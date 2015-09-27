@@ -6,9 +6,7 @@ from .sublime_php_library import *
 from pprint import pprint
 from inspect import getmembers
 
-class SublimePhpConfig():
-    file_extensions_to_include = ['.php']
-    file_extensions_to_exclude = ['.', '..', '.git']
+SETTINGS = sublime.load_settings('SublimePHP.sublime-settings')
 
 class SublimePhpImportNamespaceCommand(sublime_plugin.TextCommand):
     _fqdns = []
@@ -80,11 +78,17 @@ class SublimePhpInsertNamespaceCommand(sublime_plugin.TextCommand):
 class SublimePhpIndexFqdnsCommand(sublime_plugin.TextCommand):
     def run(self, edit):
         cache_path = os.path.join(sublime.cache_path(), 'SublimePhp')
-        file_repository = FilesRepository(sublime.active_window().folders())
+        file_repository = FilesRepository(
+            sublime.active_window().folders(),
+            SETTINGS.get('folders_to_exclude'),
+            SETTINGS.get('file_extensions_to_include')
+        )
         fs_fqdn_repository = FilesystemFqdnRepository()
-        filenames = file_repository.find_by_extensions(SublimePhpConfig.file_extensions_to_include)
+        filenames = file_repository.find_php_files()
+
         fqdns = fs_fqdn_repository.find_by_filenames(filenames)
         index = FqdnIndex.create_from_set(fqdns)
-
+        pprint(FqdnIndex.get_path_for_current_project(cache_path))
+        # TODO make insertion aware of the alternative "use" syntax so to respect ordering.
         index_manager = IndexManager(FqdnIndex.get_path_for_current_project(cache_path))
         index_manager.dump(index)

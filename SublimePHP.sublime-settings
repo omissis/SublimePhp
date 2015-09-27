@@ -1,0 +1,4 @@
+{
+    "folders_to_exclude": ["cache", "logs", ".git"],
+    "file_extensions_to_include": [".php"]
+}

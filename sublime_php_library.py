@@ -22,7 +22,7 @@ class ViewFqdnRepository:
 
     def find_by_namespace(self, namespace):
         fqdns = []
-        regions = self._view.find_all('use ' + namespace.replace('\\', '\\\\'), 0)
+        regions = self._view.find_all('(use\s)?\s*' + namespace.replace('\\', '\\\\'), 0)
 
         for region in regions:
             fqdns.append(self._view.substr(self._view.line(region)))
@@ -188,21 +188,19 @@ class IndexManager:
 
 # manages the searches for files in the filesystem
 class FilesRepository:
-    def __init__(self, folders):
+    def __init__(self, folders, folders_to_exclude, file_extensions_to_include):
         self._folders = folders
-        self._file_extensions_to_exclude = []
-        self._file_extensions_to_include = []
-
-    def find_by_extensions(self, file_extensions_to_include, file_extensions_to_exclude = ['.', '..', '.git']):
+        self._folders_to_exclude = folders_to_exclude
         self._file_extensions_to_include = file_extensions_to_include
-        self._file_extensions_to_exclude = file_extensions_to_exclude
+
+    def find_php_files(self):
         results = []
 
         for folder in self._folders:
             for dirpath, dirnames, files in os.walk(folder):
                 for i, dirname in enumerate(dirnames):
                     if self._should_skip_folder(dirname):
-                        del dirnames[i]
+                        continue
                 for j, filename in enumerate(files):
                     if self._should_skip_file(filename):
                         continue
@@ -211,8 +209,8 @@ class FilesRepository:
         return results
 
     def _should_skip_folder(self, foldername):
-        for _folder in self._file_extensions_to_exclude:
-            if foldername.startswith(_folder):
+        for _folder in self._folders_to_exclude:
+            if foldername.find(_folder):
                 return True
 
         return False
