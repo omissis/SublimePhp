@@ -10,7 +10,7 @@ SETTINGS = sublime.load_settings('SublimePHP.sublime-settings')
 
 class SublimePhpImportNamespaceCommand(sublime_plugin.TextCommand):
     _fqdns = []
-    _index = {}
+    _index = None
     _cache_path = None
     _index_manager = None
 
@@ -23,8 +23,11 @@ class SublimePhpImportNamespaceCommand(sublime_plugin.TextCommand):
         if not os.path.exists(self._cache_path):
             os.makedirs(self._cache_path)
 
-        self._index_manager = IndexManager(FqdnIndex.get_path_for_current_project(self._cache_path))
-        self._index = self._index_manager.load()
+        if None == self._index_manager:
+            self._index_manager = IndexManager(FqdnIndex.get_path_for_current_project(self._cache_path))
+
+        if None == self._index:
+            self._index = self._index_manager.load()
 
         if None == self._index:
             self.view.run_command("sublime_php_index_fqdns")

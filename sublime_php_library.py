@@ -181,6 +181,9 @@ class IndexManager:
         index_json_str = index_file.read()
         index_dict = json.loads(index_json_str)
 
+        if (0 == len(index_dict)):
+            return None
+
         return FqdnIndex.create_from_dict(index_dict)
 
 
