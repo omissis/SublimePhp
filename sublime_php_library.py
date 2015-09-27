@@ -1,12 +1,8 @@
 import sublime
-import glob
 import json
 import os
 import re
 import hashlib
-
-from pprint import pprint
-from inspect import getmembers
 
 # global functions
 

@@ -3,9 +3,6 @@ import os
 
 from .sublime_php_library import *
 
-from pprint import pprint
-from inspect import getmembers
-
 SETTINGS = sublime.load_settings('SublimePHP.sublime-settings')
 STORAGE = SublimePhpMemoryStorage()
 
@@ -27,7 +24,7 @@ class SublimePhpImportNamespaceCommand(sublime_plugin.TextCommand):
                 continue
 
             self._fqdns = STORAGE.index.get(symbol)
-            pprint(len(STORAGE.index.all()))
+
             if None == self._fqdns:
                 continue
 
