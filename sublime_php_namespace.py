@@ -89,6 +89,6 @@ class SublimePhpIndexFqdnsCommand(sublime_plugin.TextCommand):
         fqdns = fs_fqdn_repository.find_by_filenames(filenames)
         index = FqdnIndex.create_from_set(fqdns)
         pprint(FqdnIndex.get_path_for_current_project(cache_path))
-        # TODO make insertion aware of the alternative "use" syntax so to respect ordering.
+
         index_manager = IndexManager(FqdnIndex.get_path_for_current_project(cache_path))
         index_manager.dump(index)

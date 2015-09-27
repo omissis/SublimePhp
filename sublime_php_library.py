@@ -227,7 +227,7 @@ class FilesRepository:
 
 # manages the searches of sublime.Region objects inside sublime.View objects
 class ViewRegionRepository:
-    _use_namespace_regex = '^\s*use\s+([A-z\\\\][A-z0-9\\\\]+)?\s*(\s+?as\s+[A-z][A-z0-9]+)?\;'
+    _use_namespace_regex = '^\s*(use\s+)?([A-z\\\\][A-z0-9\\\\]+)?\s*(\s+?as\s+[A-z][A-z0-9]+)?\s*([,;])'
 
     def __init__(self, view):
         self.view = view
@@ -235,8 +235,10 @@ class ViewRegionRepository:
     # finds the appropriate region for inserting the given namespace
     def find_region_for_namespace(self, namespace):
         region = None
-        regions = self.view.find_all("use (.*);", 0)
+        regions = self.view.find_all(self._use_namespace_regex, 0)
 
+        # find the first usage of "class" so to make sure the insertion region
+        # doesn't fall after it due to, for example, some comments
         class_region = self.view.find("class ", 0)
 
         if len(regions) > 0:
@@ -250,7 +252,7 @@ class ViewRegionRepository:
 
                 # Save the region as the current if the current is alphabetically bigger than the previous
                 # and if it's not after the class declaration (remember also Traits use the "use" keyword).
-                if (namespace > ns.group(1) and r.end() < class_region.begin()):
+                if (namespace > ns.group(2) and ns.group(4) != "," and r.end() < class_region.begin()):
                     region = r
                     continue
 
