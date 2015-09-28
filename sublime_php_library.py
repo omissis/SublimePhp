@@ -311,17 +311,24 @@ class SublimePhpMemoryStorage():
     index = None
 
     def __init__(self):
-        self.cache_path = os.path.join(sublime.cache_path(), 'SublimePhp')
-
-        if not os.path.exists(self.cache_path):
-            os.makedirs(self.cache_path)
+        self._ensure_cache_dir()
 
         self._index_manager = IndexManager(FqdnIndex.get_path_for_current_project(self.cache_path))
 
         self.load_index()
 
     def load_index(self):
+        self._ensure_cache_dir()
+
         self.index = self._index_manager.load()
 
     def dump_index(self):
+        self._ensure_cache_dir()
+
         self._index_manager.dump(self.index)
+
+    def _ensure_cache_dir(self):
+        self.cache_path = os.path.join(sublime.cache_path(), 'SublimePHP')
+
+        if not os.path.exists(self.cache_path):
+            os.makedirs(self.cache_path)

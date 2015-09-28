@@ -1,10 +1,17 @@
 import sublime, sublime_plugin
+import shutil
 import os
 
 from .sublime_php_library import *
 
 SETTINGS = sublime.load_settings('SublimePHP.sublime-settings')
 STORAGE = SublimePhpMemoryStorage()
+
+class SublimePhpPurgeCacheDirectoryCommand(sublime_plugin.WindowCommand):
+    def run(self):
+        cache_path = os.path.join(sublime.cache_path(), 'SublimePhp')
+
+        shutil.rmtree(cache_path)
 
 class SublimePhpImportNamespaceCommand(sublime_plugin.TextCommand):
     _fqdns = []

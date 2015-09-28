@@ -6,5 +6,9 @@
     {
         "caption": "SublimePHP: Build namespaces index",
         "command": "sublime_php_index_fqdns"
+    },
+    {
+        "caption": "SublimePHP: Clear cache directory",
+        "command": "sublime_php_purge_cache_directory"
     }
 ]

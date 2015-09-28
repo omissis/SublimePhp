@@ -6,7 +6,8 @@
                 "id": "sublimephp",
                 "caption": "SublimePHP",
                 "children": [
-                    {"command": "sublime_php_index_fqdns", "caption": "(Re)Build Namespaces index."}
+                    {"command": "sublime_php_index_fqdns", "caption": "(Re)Build Namespaces index."},
+                    {"command": "sublime_php_purge_cache_directory", "caption": "Clear cache directory"}
                 ]
             }
         ]
